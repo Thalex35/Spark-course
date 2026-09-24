@@ -129,14 +129,62 @@ alter table public.wishlists enable row level security;
 alter table public.orders enable row level security;
 alter table public.course_reviews enable row level security;
 
-create policy if not exists "Public instructors are viewable" on public.instructors for select using (true);
-create policy if not exists "Public courses are viewable" on public.courses for select using (true);
-create policy if not exists "Public modules are viewable" on public.course_modules for select using (true);
-create policy if not exists "Public lessons are viewable" on public.course_lessons for select using (true);
-create policy if not exists "Public reviews are viewable" on public.course_reviews for select using (true);
+do $$
+begin
+  create policy "Public instructors are viewable" on public.instructors for select using (true);
+exception when duplicate_object then null;
+end $$;
 
-create policy if not exists "Users can manage own profile" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
-create policy if not exists "Users can manage own enrollments" on public.enrollments for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
-create policy if not exists "Users can manage own progress" on public.lesson_progress for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
-create policy if not exists "Users can manage own wishlist" on public.wishlists for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
-create policy if not exists "Users can manage own orders" on public.orders for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
+do $$
+begin
+  create policy "Public courses are viewable" on public.courses for select using (true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Public modules are viewable" on public.course_modules for select using (true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Public lessons are viewable" on public.course_lessons for select using (true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Public reviews are viewable" on public.course_reviews for select using (true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Users can manage own profile" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Users can manage own enrollments" on public.enrollments for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Users can manage own progress" on public.lesson_progress for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Users can manage own wishlist" on public.wishlists for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Users can manage own orders" on public.orders for all using (auth.uid() = profile_id) with check (auth.uid() = profile_id);
+exception when duplicate_object then null;
+end $$;
