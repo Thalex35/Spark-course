@@ -1,11 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BadgeCheck, CalendarCheck, GraduationCap, PlayCircle, Quote } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CalendarCheck,
+  CheckCircle2,
+  GraduationCap,
+  PlayCircle,
+  Quote,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import heroImage from "@/assets/hero.jpg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CourseCard } from "@/components/CourseCard";
 import { StarRating } from "@/components/StarRating";
-import { brand, courses, instructors, testimonials } from "@/lib/data";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { brand, categories, courses, instructors, testimonials } from "@/lib/data";
 import {
   Carousel,
   CarouselContent,
@@ -34,6 +45,39 @@ export const Route = createFileRoute("/")({
 });
 
 const featured = courses.slice(0, 4);
+const howItWorks = [
+  {
+    title: "Choose your path",
+    text: "Pick a programme aligned to your goals, from mobility and mindfulness to leadership and focus.",
+  },
+  {
+    title: "Follow short sessions",
+    text: "Learn with bite-sized lessons designed for real schedules and sustainable momentum.",
+  },
+  {
+    title: "Keep your progress",
+    text: "Track completion, revisit lessons and see momentum build week by week.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is this template ready to customize for my brand?",
+    a: "Yes. The content, brand, pricing and instructor details are centralized in the demo data layer, so you can swap them quickly for your own business.",
+  },
+  {
+    q: "Can this become a real product later?",
+    a: "Absolutely. The structure is designed to support a real app layer with Supabase, real auth and live lesson data without redesigning the front-end from scratch.",
+  },
+  {
+    q: "Does the app work on mobile?",
+    a: "Yes. The layout is responsive across mobile, tablet and desktop, with mobile-safe navigation and card layouts designed for smaller screens.",
+  },
+  {
+    q: "Are the checkout and login flows demo-only?",
+    a: "Yes, intentionally. They are meant to mirror production UX while keeping the project template-safe and easy to replace with real integrations later.",
+  },
+];
 
 function Home() {
   const lead = instructors[0]!;
@@ -133,8 +177,75 @@ function Home() {
         </div>
       </section>
 
+      <section className="section-x py-16">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">How it works</p>
+            <h2 className="font-display mt-2 text-3xl font-semibold">Simple, calm, and built for momentum</h2>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground">
+            <ShieldCheck width={14} height={14} className="text-primary" /> 30-day guarantee
+          </span>
+        </div>
+
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          {howItWorks.map(({ title, text }, index) => (
+            <div key={title} className="rounded-2xl border bg-card p-6 shadow-soft">
+              <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-sm font-semibold text-primary">
+                0{index + 1}
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-secondary/40 py-16">
+        <div className="section-x">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Popular categories</p>
+              <h2 className="font-display mt-2 text-3xl font-semibold">Explore a path that fits your life</h2>
+            </div>
+            <Link to="/courses" className="text-sm font-medium text-primary hover:text-accent">
+              View all courses
+            </Link>
+          </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.map((category) => (
+              <Link
+                key={category}
+                to="/courses"
+                search={{ category }}
+                className="group rounded-2xl border bg-card p-5 shadow-soft transition-colors hover:border-primary/50 hover:bg-primary-soft"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                    <Sparkles width={18} height={18} />
+                  </span>
+                  <ArrowRight
+                    width={16}
+                    height={16}
+                    className="text-muted-foreground transition-transform group-hover:translate-x-1"
+                  />
+                </div>
+                <p className="mt-5 text-lg font-semibold">{category}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {category === "Yoga" && "Mobility, recovery and strength"}
+                  {category === "Mental Health" && "Evidence-based stress and nervous system tools"}
+                  {category === "Meditation" && "Breath, attention and grounded practice"}
+                  {category === "Business" && "Focus, boundaries and leadership habits"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- Featured courses ---------- */}
-      <section className="section-x py-8">
+      <section className="section-x py-16">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
           <div className="min-w-0">
             <h2 className="font-display text-3xl font-semibold">Featured courses</h2>
@@ -213,6 +324,47 @@ function Home() {
               </figure>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="section-x py-16">
+        <div className="rounded-3xl border bg-card p-6 shadow-soft sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Why people stay</p>
+              <h2 className="font-display mt-2 text-3xl font-semibold">A calmer way to learn without the overwhelm</h2>
+            </div>
+            <Button asChild className="rounded-full">
+              <Link to="/courses">Browse the catalog</Link>
+            </Button>
+          </div>
+
+          <div className="mt-7 grid gap-4 md:grid-cols-3">
+            {[
+              "Short, guided lessons built for busy schedules",
+              "Clear progress tracking and lifetime access",
+              "Expert-led teaching with practical, repeatable tools",
+            ].map((point) => (
+              <div key={point} className="flex items-start gap-3 rounded-2xl bg-secondary/50 p-4">
+                <CheckCircle2 width={18} height={18} className="mt-0.5 shrink-0 text-primary" />
+                <p className="text-sm text-muted-foreground">{point}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-x py-8">
+        <div className="rounded-3xl border bg-card p-6 shadow-soft sm:p-8">
+          <h2 className="font-display text-3xl font-semibold">Frequently asked questions</h2>
+          <Accordion type="single" collapsible className="mt-6 space-y-3">
+            {faqs.map((item) => (
+              <AccordionItem key={item.q} value={item.q} className="rounded-xl border bg-secondary/30 px-4">
+                <AccordionTrigger className="text-left text-base font-medium">{item.q}</AccordionTrigger>
+                <AccordionContent className="pt-0 text-sm text-muted-foreground">{item.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
