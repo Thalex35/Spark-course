@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { brand } from "@/lib/data";
+import { isTemplateMode } from "@/lib/platform";
 import { useApp } from "@/lib/store";
 
 const navItems = [
@@ -39,13 +40,18 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/85 backdrop-blur-md">
       <div className="section-x grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 md:flex md:justify-between">
-        <div className="flex min-w-0 items-center gap-6">
+        <div className="flex min-w-0 items-center gap-3 md:gap-6">
           <Link to="/" className="flex min-w-0 items-center gap-2">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-primary-foreground">
               <Sparkles width={18} height={18} />
             </span>
             <span className="font-display truncate text-lg font-semibold">{brand.name}</span>
           </Link>
+          {isTemplateMode && (
+            <span className="hidden rounded-full border border-dashed border-primary/40 bg-primary-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary sm:inline-flex">
+              Template mode
+            </span>
+          )}
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => (
               <Link
