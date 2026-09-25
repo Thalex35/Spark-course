@@ -7,9 +7,12 @@ create table if not exists public.profiles (
   phone text,
   bio text,
   avatar_url text,
+  role text not null default 'student' check (role in ('student', 'instructor', 'admin')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists role text not null default 'student';
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -26,6 +29,17 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
+$$;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
 $$;
 
 do $$
@@ -187,6 +201,36 @@ end $$;
 do $$
 begin
   create policy "Users can manage own profile" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can view profiles" on public.profiles for select using (public.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can manage instructors" on public.instructors for all using (public.is_admin()) with check (public.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can manage courses" on public.courses for all using (public.is_admin()) with check (public.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can manage modules" on public.course_modules for all using (public.is_admin()) with check (public.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can manage lessons" on public.course_lessons for all using (public.is_admin()) with check (public.is_admin());
 exception when duplicate_object then null;
 end $$;
 
