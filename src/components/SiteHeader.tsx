@@ -106,6 +106,11 @@ export function SiteHeader() {
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </DropdownMenuItem>
+                {user.role === "admin" && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" search={{ view: "dashboard" }}>Admin workspace</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to="/profile">Profile</Link>
                 </DropdownMenuItem>
@@ -149,6 +154,11 @@ export function SiteHeader() {
                     <Link to="/dashboard" className="rounded-lg px-3 py-3 text-base font-medium hover:bg-muted">
                       Dashboard
                     </Link>
+                    {user.role === "admin" && (
+                      <Link to="/admin" search={{ view: "dashboard" }} className="rounded-lg px-3 py-3 text-base font-medium hover:bg-muted">
+                        Admin workspace
+                      </Link>
+                    )}
                     <Link to="/profile" className="rounded-lg px-3 py-3 text-base font-medium hover:bg-muted">
                       Profile
                     </Link>
