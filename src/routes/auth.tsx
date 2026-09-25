@@ -41,7 +41,14 @@ function AuthPage() {
 
   // Already signed in? Go where they were heading.
   useEffect(() => {
-    if (user) navigate({ to: redirect ?? "/dashboard", replace: true });
+    if (!user) return;
+    if (redirect) {
+      navigate({ to: redirect, replace: true });
+    } else if (user.role === "admin") {
+      navigate({ to: "/admin", search: { view: "dashboard" }, replace: true });
+    } else {
+      navigate({ to: "/dashboard", replace: true });
+    }
   }, [user, redirect, navigate]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>, isSignup: boolean) {
@@ -63,7 +70,6 @@ function AuthPage() {
       }
       setLoading(false);
       toast.success(isSignup ? "Account created — welcome!" : "Welcome back!");
-      navigate({ to: redirect ?? "/dashboard" });
     } catch (error) {
       setLoading(false);
       toast.error(
