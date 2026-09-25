@@ -4,6 +4,43 @@ import { getSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabas
 
 export type AppDataMode = "template" | "production";
 
+export type CreateCourseInput = {
+  title: string;
+  slug: string;
+  category: string;
+  level: Course["level"];
+  price: number;
+  shortDescription: string;
+  image: string;
+};
+
+export async function createCourse(input: CreateCourseInput) {
+  if (platformMode === "template" || !isSupabaseConfigured || !supabase) {
+    throw new Error("Course creation requires production mode with Supabase configured.");
+  }
+
+  const client = getSupabaseClient();
+  const { data: instructor, error: instructorError } = await client
+    .from("instructors")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+  if (instructorError || !instructor)
+    throw instructorError ?? new Error("Create an instructor before adding a course.");
+
+  const { error } = await client.from("courses").insert({
+    title: input.title,
+    slug: input.slug,
+    instructor_id: instructor.id,
+    category: input.category,
+    level: input.level,
+    price: input.price,
+    short_description: input.shortDescription,
+    image_url: input.image,
+  });
+  if (error) throw error;
+}
+
 export async function getCourses(): Promise<Course[]> {
   if (platformMode === "template" || !isSupabaseConfigured || !supabase) {
     return courses;
@@ -25,9 +62,13 @@ export async function getCourses(): Promise<Course[]> {
     level: course.level as "Beginner" | "Intermediate" | "Advanced",
     price: Number(course.price ?? 0),
     shortDescription: String(course.short_description ?? ""),
-    description: Array.isArray(course.description) ? course.description.map((item) => String(item)) : [],
+    description: Array.isArray(course.description)
+      ? course.description.map((item) => String(item))
+      : [],
     outcomes: Array.isArray(course.outcomes) ? course.outcomes.map((item) => String(item)) : [],
-    requirements: Array.isArray(course.requirements) ? course.requirements.map((item) => String(item)) : [],
+    requirements: Array.isArray(course.requirements)
+      ? course.requirements.map((item) => String(item))
+      : [],
     students: Number(course.students_count ?? 0),
     rating: Number(course.rating ?? 0),
     reviewCount: Number(course.review_count ?? 0),

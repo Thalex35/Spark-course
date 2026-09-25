@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { brand, courses as demoCourses } from "@/lib/data";
-import { getCourses } from "@/lib/data-source";
+import { createCourse, getCourses } from "@/lib/data-source";
 import { isTemplateMode } from "@/lib/platform";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { useApp } from "@/lib/store";
@@ -241,7 +241,9 @@ function AdminPage() {
         <div className="mx-auto max-w-[1440px] p-5 sm:p-8">
           {view === "dashboard" && <DashboardView courses={courses} stats={stats} />}
           {view === "analytics" && <AnalyticsView stats={stats} />}
-          {view === "courses" && <CoursesView courses={courses} />}
+          {view === "courses" && (
+            <CoursesView courses={courses} onCreated={() => void getCourses().then(setCourses)} />
+          )}
           {view === "users" && <UsersView />}
           {view === "settings" && <SettingsView />}
         </div>
@@ -400,7 +402,40 @@ function AnalyticsView({ stats }: { stats: Stats }) {
   );
 }
 
-function CoursesView({ courses }: { courses: typeof demoCourses }) {
+function CoursesView({
+  courses,
+  onCreated,
+}: {
+  courses: typeof demoCourses;
+  onCreated: () => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    setSaving(true);
+    try {
+      await createCourse({
+        title: String(form.get("title")),
+        slug: String(form.get("slug")),
+        category: String(form.get("category")),
+        level: String(form.get("level")) as "Beginner" | "Intermediate" | "Advanced",
+        price: Number(form.get("price")),
+        shortDescription: String(form.get("shortDescription")),
+        image: String(form.get("image")),
+      });
+      toast.success("Course created");
+      setShowForm(false);
+      onCreated();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create course");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -410,10 +445,66 @@ function CoursesView({ courses }: { courses: typeof demoCourses }) {
             Manage the catalog that powers the real learning experience.
           </p>
         </div>
-        <Button className="rounded-full" onClick={() => toast("Course creation form coming next.")}>
-          <FilePlus2 /> Add course
+        <Button className="rounded-full" onClick={() => setShowForm((open) => !open)}>
+          <FilePlus2 /> {showForm ? "Close form" : "Add course"}
         </Button>
       </div>
+      {showForm && (
+        <form
+          onSubmit={submit}
+          className="grid gap-4 rounded-2xl border bg-card p-6 shadow-soft sm:grid-cols-2"
+        >
+          <label className="text-sm font-medium">
+            Title
+            <Input name="title" required className="mt-2" />
+          </label>
+          <label className="text-sm font-medium">
+            Slug
+            <Input name="slug" required placeholder="mindful-beginnings" className="mt-2" />
+          </label>
+          <label className="text-sm font-medium">
+            Category
+            <Input name="category" required placeholder="Wellness" className="mt-2" />
+          </label>
+          <label className="text-sm font-medium">
+            Level
+            <select
+              name="level"
+              defaultValue="Beginner"
+              className="mt-2 flex h-10 w-full rounded-md border bg-background px-3 text-sm"
+            >
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium">
+            Price
+            <Input
+              name="price"
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue="29"
+              className="mt-2"
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Image URL
+            <Input name="image" required type="url" placeholder="https://..." className="mt-2" />
+          </label>
+          <label className="text-sm font-medium sm:col-span-2">
+            Short description
+            <Input name="shortDescription" required className="mt-2" />
+          </label>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={saving} className="rounded-full">
+              {saving ? "Creating..." : "Create course"}
+            </Button>
+          </div>
+        </form>
+      )}
       <div className="overflow-hidden rounded-2xl border bg-card shadow-soft">
         <div className="grid grid-cols-[minmax(0,1fr)_100px_120px_110px] gap-4 border-b px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Course</span>
