@@ -24,7 +24,10 @@ export const Route = createFileRoute("/auth")({
         content: "Sign in to continue your courses or create a free Serenity Studio account.",
       },
       { property: "og:title", content: "Sign in — Serenity Studio" },
-      { property: "og:description", content: "Access your enrolled courses and track your progress." },
+      {
+        property: "og:description",
+        content: "Access your enrolled courses and track your progress.",
+      },
     ],
   }),
   component: AuthPage,
@@ -33,7 +36,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { mode = "signin", redirect } = Route.useSearch();
   const navigate = useNavigate();
-  const { signIn, user } = useApp();
+  const { signIn, signUp, signInWithProvider, user } = useApp();
   const [loading, setLoading] = useState(false);
 
   // Already signed in? Go where they were heading.
@@ -41,23 +44,42 @@ function AuthPage() {
     if (user) navigate({ to: redirect ?? "/dashboard", replace: true });
   }, [user, redirect, navigate]);
 
-  function submit(e: React.FormEvent<HTMLFormElement>, isSignup: boolean) {
+  async function submit(e: React.FormEvent<HTMLFormElement>, isSignup: boolean) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email") ?? "");
     const name = String(form.get("name") ?? "");
+    const password = String(form.get("password") ?? "");
     if (isSignup && String(form.get("password")) !== String(form.get("confirm"))) {
       toast.error("Those passwords don't match");
       return;
     }
     setLoading(true);
-    // Simulated API latency for the demo flow.
-    setTimeout(() => {
-      signIn(email, name);
+    try {
+      if (isSignup) {
+        await signUp(email, name, password);
+      } else {
+        await signIn(email, name, password);
+      }
       setLoading(false);
       toast.success(isSignup ? "Account created — welcome!" : "Welcome back!");
       navigate({ to: redirect ?? "/dashboard" });
-    }, 700);
+    } catch (error) {
+      setLoading(false);
+      toast.error(
+        error instanceof Error ? error.message : "Authentication failed. Please try again.",
+      );
+    }
+  }
+
+  async function continueWithProvider(provider: "google" | "facebook") {
+    setLoading(true);
+    try {
+      await signInWithProvider(provider, redirect);
+    } catch (error) {
+      setLoading(false);
+      toast.error(error instanceof Error ? error.message : `Unable to continue with ${provider}.`);
+    }
   }
 
   return (
@@ -65,12 +87,14 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <h1 className="font-display text-center text-3xl font-semibold">Welcome to {brand.name}</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          This is a demo sign-in — any email and password will work.
+          Sign in to continue your courses and track your progress.
         </p>
 
         <Tabs
           value={mode}
-          onValueChange={(v) => navigate({ to: "/auth", search: { mode: v as "signin" | "signup", redirect } })}
+          onValueChange={(v) =>
+            navigate({ to: "/auth", search: { mode: v as "signin" | "signup", redirect } })
+          }
           className="mt-8"
         >
           <TabsList className="grid w-full grid-cols-2">
@@ -79,14 +103,31 @@ function AuthPage() {
           </TabsList>
 
           <TabsContent value="signin">
-            <form onSubmit={(e) => submit(e, false)} className="space-y-4 rounded-2xl border bg-card p-6 shadow-soft">
+            <form
+              onSubmit={(e) => submit(e, false)}
+              className="space-y-4 rounded-2xl border bg-card p-6 shadow-soft"
+            >
               <div>
                 <Label htmlFor="si-email">Email</Label>
-                <Input id="si-email" name="email" type="email" required placeholder="you@example.com" className="mt-1.5" />
+                <Input
+                  id="si-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  className="mt-1.5"
+                />
               </div>
               <div>
                 <Label htmlFor="si-password">Password</Label>
-                <Input id="si-password" name="password" type="password" required minLength={4} className="mt-1.5" />
+                <Input
+                  id="si-password"
+                  name="password"
+                  type="password"
+                  required
+                  minLength={4}
+                  className="mt-1.5"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm">
@@ -107,22 +148,52 @@ function AuthPage() {
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={(e) => submit(e, true)} className="space-y-4 rounded-2xl border bg-card p-6 shadow-soft">
+            <form
+              onSubmit={(e) => submit(e, true)}
+              className="space-y-4 rounded-2xl border bg-card p-6 shadow-soft"
+            >
               <div>
                 <Label htmlFor="su-name">Full name</Label>
-                <Input id="su-name" name="name" required placeholder="Alex Rivera" className="mt-1.5" />
+                <Input
+                  id="su-name"
+                  name="name"
+                  required
+                  placeholder="Alex Rivera"
+                  className="mt-1.5"
+                />
               </div>
               <div>
                 <Label htmlFor="su-email">Email</Label>
-                <Input id="su-email" name="email" type="email" required placeholder="you@example.com" className="mt-1.5" />
+                <Input
+                  id="su-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  className="mt-1.5"
+                />
               </div>
               <div>
                 <Label htmlFor="su-password">Password</Label>
-                <Input id="su-password" name="password" type="password" required minLength={4} className="mt-1.5" />
+                <Input
+                  id="su-password"
+                  name="password"
+                  type="password"
+                  required
+                  minLength={4}
+                  className="mt-1.5"
+                />
               </div>
               <div>
                 <Label htmlFor="su-confirm">Confirm password</Label>
-                <Input id="su-confirm" name="confirm" type="password" required minLength={4} className="mt-1.5" />
+                <Input
+                  id="su-confirm"
+                  name="confirm"
+                  type="password"
+                  required
+                  minLength={4}
+                  className="mt-1.5"
+                />
               </div>
               <label className="flex items-start gap-2 text-sm">
                 <Checkbox name="terms" required className="mt-0.5" />
@@ -138,7 +209,8 @@ function AuthPage() {
         </Tabs>
 
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or continue with <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-border" /> or continue with{" "}
+          <span className="h-px flex-1 bg-border" />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {["Google", "Facebook"].map((provider) => (
@@ -146,7 +218,10 @@ function AuthPage() {
               key={provider}
               variant="outline"
               className="rounded-full"
-              onClick={() => toast(`${provider} sign-in is mocked in this template.`)}
+              disabled={loading}
+              onClick={() =>
+                void continueWithProvider(provider.toLowerCase() as "google" | "facebook")
+              }
             >
               Continue with {provider}
             </Button>
