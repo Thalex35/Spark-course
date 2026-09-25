@@ -16,6 +16,7 @@ export type DemoUser = {
   email: string;
   phone: string;
   bio: string;
+  role: "student" | "instructor" | "admin";
 };
 
 type AppState = {
@@ -69,19 +70,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const { data } = await client.auth.getSession();
         if (!active) return;
         const authUser = data.session?.user;
+        const { data: profile } = authUser
+          ? await client
+              .from("profiles")
+              .select("role, phone, bio, full_name")
+              .eq("id", authUser.id)
+              .maybeSingle()
+          : { data: null };
         setState((current) => ({
           ...current,
           user: authUser
             ? {
                 name: String(
-                  authUser.user_metadata?.full_name ??
+                  profile?.full_name ??
+                    authUser.user_metadata?.full_name ??
                     authUser.user_metadata?.name ??
                     authUser.email?.split("@")[0] ??
                     "Student",
                 ),
                 email: authUser.email ?? "",
-                phone: String(authUser.user_metadata?.phone ?? ""),
-                bio: String(authUser.user_metadata?.bio ?? ""),
+                phone: String(profile?.phone ?? authUser.user_metadata?.phone ?? ""),
+                bio: String(profile?.bio ?? authUser.user_metadata?.bio ?? ""),
+                role:
+                  profile?.role === "admin"
+                    ? "admin"
+                    : profile?.role === "instructor"
+                      ? "instructor"
+                      : "student",
               }
             : null,
         }));
@@ -146,6 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             email,
             phone: "",
             bio: "",
+            role: "student",
           },
         }));
       },
@@ -166,7 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         setState((s) => ({
           ...s,
-          user: { name, email, phone: "", bio: "" },
+          user: { name, email, phone: "", bio: "", role: "student" },
         }));
       },
       signInWithProvider: async (provider, redirect) => {
@@ -178,6 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               email: `${provider}@example.com`,
               phone: "",
               bio: "",
+              role: "student",
             },
           }));
           return;
